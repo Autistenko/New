@@ -1,0 +1,25 @@
+ cout << "\n/=== Задача 1 ===/" << endl;
+ double x;
+ cout << "Введите число x: ";
+ cin >> x;
+
+ double task1[31];
+ int count1 = 0;
+
+ for (int i = 0; i < N; i++) {
+     if (temperatures[i] <= x) {
+         task1[count1] = temperatures[i];
+         count1++;
+     }
+ }
+ cout << "Массив после удаления эл-овв > " << x << ": ";
+ if (count1 == 0) {
+     cout << "массив пуст";
+ }
+ else {
+     for (int i = 0; i < count1; i++) {
+         cout << task1[i] << " ";
+     }
+ }
+ cout << endl;
+}
