@@ -1,0 +1,132 @@
+#include <iostream>
+#include <vector>
+#include <memory> 
+#include <string>
+#include <windows.h>
+
+using namespace std;
+
+class Animal {
+protected:
+    string name;  
+
+public:
+   
+    Animal(const string& n) : name(n) {
+        cout << "Создан объект Animal с именем " << name << endl;
+    }
+
+   
+    virtual void move() = 0;
+
+   
+    virtual void makeSound() {
+        cout << name << " издает неизвестный звук" << endl;
+    }
+
+    
+    virtual ~Animal() {
+        cout << "Уничтожен объект Animal с именем " << name << endl;
+    }
+};
+class Cat : public Animal {
+public:
+    Cat(const string& n) : Animal(n) {
+        cout << "  Создан кот " << name << endl;
+    }
+
+    void makeSound() override {
+        cout << name << " говорит мяу" << endl;
+    }
+
+    void move() override {
+        cout << name << " крадется бесшумно" << endl;
+    }
+
+    ~Cat() override {
+        cout << "  Уничтожен кот " << name << endl;
+    }
+};
+class Dog : public Animal {
+private:
+    string breed;  
+
+public:
+    Dog(const string& n, const string& b) : Animal(n), breed(b) {
+        cout << "  Создана собака " << name << " породы " << breed << endl;
+    }
+
+    void makeSound() override {
+        cout << name << " (порода: " << breed << ") говорит Гав-гав" << endl;
+    }
+
+    void move() override {
+        cout << name << " бегает за мячом" << endl;
+    }
+
+    ~Dog() override {
+        cout << "  Уничтожена собака " << name << " породы " << breed << endl;
+    }
+};
+
+class Bird : public Animal {
+private:
+    bool canFly;  
+
+public:
+    Bird(const string& n, bool fly) : Animal(n), canFly(fly) {
+        cout << "  Создана птица " << name;
+        if (canFly) {
+            cout << " (летающая)" << endl;
+        }
+        else {
+            cout << " (нелетающая)" << endl;
+        }
+    }
+
+    void makeSound() override {
+        cout << name << " чирикает: Чик-чирик" << endl;
+    }
+
+    void move() override {
+        if (canFly) {
+            cout << name << " парит в небе" << endl;
+        }
+        else {
+            cout << name << " прыгает по земле" << endl;
+        }
+    }
+
+    ~Bird() override {
+        cout << "  Уничтожена птица " << name << endl;
+    }
+};
+void animalShow(Animal* anim) {  
+    cout << "\n--- Демонстрация животного ---" << endl;
+    anim->makeSound();  
+    anim->move();       
+    cout << "-----------------------------" << endl;
+}
+int main() {
+    
+    SetConsoleCP(1251);
+    SetConsoleOutputCP(1251);
+    setlocale(LC_ALL, "Russian");
+
+    cout << " НАЧАЛО ПРОГРАММЫ " << endl << endl;
+    vector<unique_ptr<Animal>> animals;
+    animals.push_back(make_unique<Cat>("Барсик"));
+    animals.push_back(make_unique<Cat>("Мурка"));
+    animals.push_back(make_unique<Dog>("Шарик", "Овчарка"));
+    animals.push_back(make_unique<Dog>("Бобик", "Дворяжка"));
+    animals.push_back(make_unique<Bird>("еша", true));   
+    animals.push_back(make_unique<Bird>("Страус", false)); 
+    animals.push_back(make_unique<Bird>("Пигвин", false));
+    cout << "\n==__== ПОЛИМОРФИЗМ ==__==" << endl;
+
+    for (const auto& animalPtr : animals) {
+        animalShow(animalPtr.get());  
+    }
+    cout << "\n=== ЗАВЕРШЕНИЕ ПРОГРАММЫ ===" << endl;
+    return 0;
+}
