@@ -1,0 +1,319 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <windows.h>
+
+using namespace std;
+
+
+class Room {
+public:
+    int number;
+    string type;
+    double price;
+    bool conditioner;
+    bool minibar;
+
+    Room(int n, string t, double p, bool cond, bool bar) {
+        number = n;
+        type = t;
+        price = p;
+        conditioner = cond;
+        minibar = bar;
+    }
+
+    void show() {
+        cout << "Комната " << number << " (" << type << ") - " << price << " руб/ночь";
+        if (conditioner) cout << ", кондиционер";
+        if (minibar) cout << ", мини-бар";
+        cout << endl;
+    }
+};
+
+class Guest {
+public:
+    int id;
+    string name;
+    string phone;
+    string passport;
+
+    Guest(int i, string n, string p, string pass) {
+        id = i;
+        name = n;
+        phone = p;
+        passport = pass;
+    }
+
+    void show() {
+        cout << "Гость " << id << ": " << name << ", тел: " << phone << endl;
+    }
+};
+
+class Booking {
+public:
+    int id;
+    int roomNumber;
+    int guestId;
+    string dateStart;
+    string dateEnd;
+    double totalPrice;
+    bool isPaid;
+
+    Booking(int i, int room, int guest, string start, string end, double price) {
+        id = i;
+        roomNumber = room;
+        guestId = guest;
+        dateStart = start;
+        dateEnd = end;
+        totalPrice = price;
+        isPaid = false;
+    }
+
+    void show() {
+        cout << "Бронь #" << id << ": комната " << roomNumber
+            << ", гость " << guestId << ", " << dateStart << " - " << dateEnd
+            << ", сумма: " << totalPrice << " руб., оплачено: " << (isPaid ? "Да" : "Нет") << endl;
+    }
+};
+
+vector<Room> rooms;
+vector<Guest> guests;
+vector<Booking> bookings;
+
+int nextGuestId = 4;     // следующие ID (3 уже есть)
+int nextBookingId = 3;   // 2 бронирования уже есть
+
+bool isRoomFree(int roomNumber, string start, string end) {
+    for (Booking& b : bookings) {
+        if (b.roomNumber == roomNumber) {
+            // Простая проверка: если даты пересекаются
+            if (!(b.dateEnd <= start || b.dateStart >= end)) {
+                return false; // Занято!
+            }
+        }
+    }
+    return true; // Свободно
+}
+
+Room* findRoom(int number) {
+    for (int i = 0; i < rooms.size(); i++) {
+        if (rooms[i].number == number) {
+            return &rooms[i];
+        }
+    }
+    return nullptr;
+}
+
+Guest* findGuest(int id) {
+    for (int i = 0; i < guests.size(); i++) {
+        if (guests[i].id == id) {
+            return &guests[i];
+        }
+    }
+    return nullptr;
+}
+
+double calculatePrice(Room* room, int days) {
+    double total = room->price * days;
+
+    // Доп услуги
+    if (room->conditioner) total += 300 * days;
+    if (room->minibar) total += 500 * days;
+
+    // Наценка за тип
+    if (room->type == "Люкс") total *= 1.5;
+    else if (room->type == "Полулюкс") total *= 1.2;
+
+    return total;
+}
+
+bool createBooking(int roomNumber, int guestId, string start, string end) {
+    // Проверяем комнату
+    Room* room = findRoom(roomNumber);
+    if (room == nullptr) {
+        cout << "ОШИБКА: Комната не найдена!" << endl;
+        return false;
+    }
+
+    Guest* guest = findGuest(guestId);
+    if (guest == nullptr) {
+        cout << "ОШИБКА: Гость не найден!" << endl;
+        return false;
+    }
+
+    if (!isRoomFree(roomNumber, start, end)) {
+        cout << "ОШИБКА: Комната уже занята в эти даты!" << endl;
+        return false;
+    }
+
+    int days = 1; // для простоты считаем 1 день
+    double price = calculatePrice(room, days);
+
+    Booking newBooking(nextBookingId, roomNumber, guestId, start, end, price);
+    bookings.push_back(newBooking);
+
+    cout << "БРОНИРОВАНИЕ СОЗДАНО! ID: " << nextBookingId << ", Сумма: " << price << " руб." << endl;
+    nextBookingId++;
+    return true;
+}
+
+bool cancelBooking(int bookingId) {
+    for (int i = 0; i < bookings.size(); i++) {
+        if (bookings[i].id == bookingId) {
+            bookings.erase(bookings.begin() + i);
+            cout << "Бронирование #" << bookingId << " отменено!" << endl;
+            return true;
+        }
+    }
+    cout << "ОШИБКА: Броирование не найдено!" << endl;
+    return false;
+}
+
+vector<Room> findFreeRooms(string start, string end) {
+    vector<Room> freeRooms;
+    for (Room& room : rooms) {
+        if (isRoomFree(room.number, start, end)) {
+            freeRooms.push_back(room);
+        }
+    }
+    return freeRooms;
+}
+
+// ===================== ИНТРФЕЙС ПОЛЬЗОВАТЕЛЯ ===================
+
+void showMenu() {
+    cout << "\n========== ГОСТИНИЦА ==========" << endl;
+    cout << "1. Свободные комнаты" << endl;
+    cout << "2. Забронировать" << endl;
+    cout << "3. Отменить бронь" << endl;
+    cout << "4. Новый гость" << endl;
+    cout << "5. Все бронирования" << endl;
+    cout << "6. Выход" << endl;
+    cout << "================================" << endl;
+    cout << "Выберите: ";
+}
+
+void showFreeRooms() {
+    string start, end;
+    cout << "Дата заезда (ГГГГ-ММ-ДД): ";
+    cin >> start;
+    cout << "Дата выезда (ГГГГ-ММ-ДД): ";
+    cin >> end;
+
+    vector<Room> free = findFreeRooms(start, end);
+
+    if (free.empty()) {
+        cout << "Свободных комнат нет :(" << endl;
+    }
+    else {
+        cout << "\nСВОБОДНЫЕ КОМНАТЫ:" << endl;
+        for (Room& room : free) {
+            room.show();
+        }
+    }
+}
+
+void addNewGuest() {
+    string name, phone, passport;
+    cout << "Имя гостя: ";
+    cin.ignore();
+    getline(cin, name);
+    cout << "Телефон: ";
+    getline(cin, phone);
+    cout << "Паспорт: ";
+    getline(cin, passport);
+
+    Guest newGuest(nextGuestId, name, phone, passport);
+    guests.push_back(newGuest);
+
+    cout << "ГОСТЬ ДОАВЛЕН! ID: " << nextGuestId << endl;
+    nextGuestId++;
+}
+
+void makeBooking() {
+    int roomNum, guestId;
+    string start, end;
+
+    cout << "Номер комнаты: ";
+    cin >> roomNum;
+    cout << "ID гостя: ";
+    cin >> guestId;
+    cout << "Дата заезда (ГГГГ-ММ-ДД): ";
+    cin >> start;
+    cout << "Дата выезда (ГГГГ-ММ-ДД): ";
+    cin >> end;
+
+    createBooking(roomNum, guestId, start, end);
+}
+
+void showAllBookings() {
+    if (bookings.empty()) {
+        cout << "Бронирований нет!" << endl;
+    }
+    else {
+        cout << "\nВСЕ БРОНИРОВАНИЯ:" << endl;
+        for (Booking& b : bookings) {
+            b.show();
+        }
+    }
+}
+
+// ======================== ГЛАВНАЯ ФУНКЦИЯ ========================
+
+int main() {
+    SetConsoleCP(1251);
+    SetConsoleOutputCP(1251);
+    setlocale(LC_ALL, "Russian");
+
+    rooms.push_back(Room(101, "Стандарт", 3000, true, false));
+    rooms.push_back(Room(102, "Стандарт", 3000, true, true));
+    rooms.push_back(Room(201, "Полулюкс", 5000, true, true));
+    rooms.push_back(Room(202, "Полулюкс", 5000, true, true));
+    rooms.push_back(Room(301, "Люкс", 10000, true, true));
+
+    guests.push_back(Guest(1, "Иван Петров", "89991234567", "1234 567890"));
+    guests.push_back(Guest(2, "Мария Сидорова", "89992345678", "2345 678901"));
+    guests.push_back(Guest(3, "Алексей Иванов", "89993456789", "3456 789012"));
+
+    bookings.push_back(Booking(1, 101, 1, "2026-06-20", "2026-06-25", 15000));
+    bookings.push_back(Booking(2, 201, 2, "2026-07-01", "2026-07-05", 26000));
+    bookings[0].isPaid = true; // первое оплачено
+
+    cout << "Добро пожаловать в систему бронирования отеля!" << endl;
+    cout << "Тестовые данные загружены." << endl;
+
+    // ГЛАВНЫЙ ЦИКЛ
+    int choice;
+    do {
+        showMenu();
+        cin >> choice;
+
+        switch (choice) {
+        case 1:
+            showFreeRooms();
+            break;
+        case 2:
+            makeBooking();
+            break;
+        case 3:
+            int id;
+            cout << "ID бронирования: ";
+            cin >> id;
+            cancelBooking(id);
+            break;
+        case 4:
+            addNewGuest();
+            break;
+        case 5:
+            showAllBookings();
+            break;
+        case 6:
+            cout << "До свидания!" << endl;
+            break;
+        default:
+            cout << "Неверный выбор!" << endl;
+        }
+    } while (choice != 6);
+
+    return 0;
+}
