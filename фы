@@ -1,0 +1,69 @@
+#include <iostream>
+#include <iomanip>
+#include <windows.h>
+// для setprecision
+using namespace std;
+
+int main() {
+
+    SetConsoleCP(1251);
+    SetConsoleOutputCP(1251);
+    setlocale(LC_ALL, "Russian");
+    int N;
+    cout << "Введите количество студентов: ";
+    cin >> N;
+
+    // Создаем массив для хранения оценок
+    int grades[100]; // предполагаем, что N <= 100
+
+    // Вводим оценки
+    cout << "Введите " << N << " оценок: ";
+    for (int i = 0; i < N; i++) {
+        cin >> grades[i];
+    }
+
+    // 1. Вывод всех оценок в одну строку
+    cout << "Оценки: ";
+    for (int i = 0; i < N; i++) {
+        cout << grades[i] << " ";
+    }
+    cout << endl;
+
+    // 2. Средний балл
+    double sum = 0;
+    for (int i = 0; i < N; i++) {
+        sum += grades[i];
+    }
+    double average = sum / N;
+    cout << "Средний балл: " << fixed << setprecision(2) << average << endl;
+
+    // 3. Количество студентов с баллом выше среднего
+    int count_above = 0;
+    for (int i = 0; i < N; i++) {
+        if (grades[i] > average) {
+            count_above++;
+        }
+    }
+    cout << "Количество студентов с баллом выше среднего: " << count_above << endl;
+
+    // 4. Максимальный и минимальный балл
+    int max_grade = grades[0];
+    int min_grade = grades[0];
+    for (int i = 1; i < N; i++) {
+        if (grades[i] > max_grade) max_grade = grades[i];
+        if (grades[i] < min_grade) min_grade = grades[i];
+    }
+    cout << "Максимальный балл: " << max_grade << endl;
+    cout << "Минимальный балл: " << min_grade << endl;
+
+    // 5. Номера студентов с максимальным баллом (индексы начиная с 1)
+    cout << "Номера студентов с максимальным баллом: ";
+    for (int i = 0; i < N; i++) {
+        if (grades[i] == max_grade) {
+            cout << i + 1 << " ";
+        }
+    }
+    cout << endl;
+
+    return 0;
+}
